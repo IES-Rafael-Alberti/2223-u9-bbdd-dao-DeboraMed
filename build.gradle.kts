@@ -14,6 +14,8 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
+    implementation("com.github.ajalt.clikt:clikt:3.5.0")
+    implementation("com.h2database:h2:2.1.214")
 }
 
 tasks.test {
