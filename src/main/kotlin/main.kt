@@ -8,36 +8,20 @@ val userName = "sa"
 val password = "sa"
 
 
-
 data class Ctf(val id: Int, val grupoId: Int, val puntuacion: Int)
 data class Grupo(val grupoid: Int, val mejorCtfId: Int = 0)
 
 fun main(args: Array<String>) {
-    /*conexion con la BBDD
-    val conn = DriverManager.getConnection(jdbcUrl, userName, password) // Uso de Connection
 
-    val stmt: Statement = conn.createStatement()
-    val rs: ResultSet = stmt.executeQuery("SELECT grupoid FROM GRUPOS")
-
-    while (rs.next()) {
-        val lastName = rs.getString("grupoid")
-        println(lastName)
-    }
-
-
-    //codigo que venia
-    val participaciones = listOf(Ctf(1, 1, 3), Ctf(1, 2, 101), Ctf(2, 2, 3), Ctf(2, 1, 50), Ctf(2, 3, 1), Ctf(3, 1, 50), Ctf(3, 3, 5))
-    val mejoresCtfByGroupId = calculaMejoresResultados(participaciones)
-    println(mejoresCtfByGroupId)
-     */
-
-    //mi codigo
     var ctf=Ctf(3,3,342344)
     anadeParticipacion(ctf)
 
     val grupoid=3
     val ctfid=3
     eliminaParticipacion(grupoid,ctfid)
+
+    var grupoid1=1
+    muestraParticipacion(grupoid1)
 
 }
 // 1º comando añade participacion de un grupo (insert en ctf) consulta sobre ctf con mejor puntucion de ese grupo
@@ -126,11 +110,8 @@ fun eliminaParticipacion(grupoid: Int,ctfid:Int){
         preparedStatement.executeUpdate()
 
 
-
         //ELIMINA LA PARTICIPACION DE UN GRUPO EN EL ctf
         val deleteSqlString = ("DELETE FROM CTFS WHERE grupoid=? AND ctfid=?")
-
-
 
         preparedStatement = conn.prepareStatement(deleteSqlString) // Uso de PreparedStatement
 
@@ -140,8 +121,6 @@ fun eliminaParticipacion(grupoid: Int,ctfid:Int){
 
         //ejecuta el delete y cuenta cuantos
         val deleteCount = preparedStatement.executeUpdate()
-
-
 
         //Y RECALCULA EL CAMPO MEJORPOS DE LOS GRUPOS EN LA TABLA GRUPOS
         val updateSqlString = ("UPDATE GRUPOS\n" +
@@ -168,8 +147,6 @@ fun eliminaParticipacion(grupoid: Int,ctfid:Int){
         preparedStatement.executeUpdate()
 
 
-
-
         //comprueba si se ha realizado el delete
         if (deleteCount > 0) {
             println("Procesado: Eliminada participación del grupo $grupoid en el CTF $ctfid.")
@@ -189,33 +166,53 @@ fun eliminaParticipacion(grupoid: Int,ctfid:Int){
 // 3º select del grupo dado, sino info de todo
 fun muestraParticipacion(grupoid:Int){
 
-    //conexion con la BBDD
-    val conn = DriverManager.getConnection(jdbcUrl, userName, password)
+    try{
+        //conexion con la BBDD
+        val conn = DriverManager.getConnection(jdbcUrl, userName, password)
 
 
-    val stmt: Statement = conn.createStatement()
-    val rs: ResultSet = stmt.executeQuery("select * from grupos where grupoid=?;")
+        //actualiza el campo que es clave foranea y no not null a null
+        var psSelectGroup = conn.prepareStatement("select * from grupos where grupoid=?") // Uso de PreparedStatement
 
-    if (rs.wasNull()) {
-        //poner condicion de que se imprima entera
-        val lastName = rs.getString("grupoid")
-        println(lastName)
+        psSelectGroup.setInt(1, grupoid)
+
+        //ejecuta el delete
+        var resultSelectGroup = psSelectGroup.executeQuery()
+
+
+
+        var resultadoVacio = true
+        while (resultSelectGroup.next()) {
+            resultadoVacio = false
+            val grupoid = resultSelectGroup.getString("grupoid")
+            val grupodesc  = resultSelectGroup.getString("grupodesc")
+            val mejorposCTFid = resultSelectGroup.getString("mejorposCTFid")
+            println("GRUPO: $grupoid  $grupodesc  MEJORCTF: $mejorposCTFid")
+        }
+
+
+        if(resultadoVacio) {
+
+            var sSelectAllGroup = conn.createStatement() // Uso de PreparedStatement
+
+            //ejecuta el delete
+            var resultSelectAllGroup = sSelectAllGroup.executeQuery("select * from grupos")
+
+            while (resultSelectAllGroup.next()) {
+                val grupoid = resultSelectAllGroup.getString("grupoid")
+                val grupodesc  = resultSelectAllGroup.getString("grupodesc")
+                val mejorposCTFid = resultSelectAllGroup.getString("mejorposCTFid")
+                println("GRUPO: $grupoid  $grupodesc  MEJORCTF: $mejorposCTFid")
+            }
+
+        }
+        psSelectGroup.close()
+
+
+    }catch (ex: SQLException) {
+        println(ex.message);
+
     }
-
-
-
-    //select del grupo dado
-    var updateStatement = ("select grupoid,grupodesc,mejorposCTFid\n" +
-                            "from grupos\n" +
-                            "where grupoid =?;")
-
-    var preparedStatement = conn.prepareStatement(updateStatement) // Uso de PreparedStatement
-
-    preparedStatement.setInt(1, grupoid)
-
-    //ejecuta el select
-    preparedStatement.executeUpdate()
-
 
 
 }
